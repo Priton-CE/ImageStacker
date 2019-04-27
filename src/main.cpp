@@ -8,8 +8,8 @@ void PrintLog(std::string message) {
 
 int main()
 {
-	String InputPath =	"F:/source/VS Projects/VS19/C++/overlap/x64/Debug/input_länger.mp4";
-	String OutputPath = "F:/source/VS Projects/VS19/C++/overlap/x64/Release/Output/Output.png";
+	String InputPath =	"F:/input.mp4";
+	String OutputPath = "F:/Output.png";
 
 	PrintLog("Start overlap\n");
 
