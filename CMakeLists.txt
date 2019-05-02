@@ -1,3 +1,8 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14.2)
+project("ImageStacker")
 
-add_executable(${CMAKE_PROJECT_NAME} src/main.cpp src/define.h src/ImageStacker.cpp src/ImageStacker.h)
+add_subdirectory(src)
+
+#OpenCV
+find_package(OpenCV REQUIRED)
+target_link_libraries("ImageStacker" ${OpenCV_LIBS} )

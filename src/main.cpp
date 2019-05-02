@@ -1,31 +1,36 @@
 #include "ImageStacker.h"
 
-std::string Log = "";
-void PrintLog(std::string message) {
-	Log += message;
-	std::cout << message;
-}
-
-int main()
+int main(int args, char *argv[])
 {
-	String InputPath =	"F:/input.mp4";
-	String OutputPath = "F:/Output.png";
+	String InputPath = "F:/source/VS Projects/VS19/C++/ImageStacker/input.mp4"; //"F:/source/VS Projects/VS19/C++/ImageStacker/input.mp4"
+	String OutputPath = "F:/source/VS Projects/VS19/C++/ImageStacker/output.png"; //"F:/source/VS Projects/VS19/C++/ImageStacker/output.png"
 
-	PrintLog("Start overlap\n");
+	//if (args > 1) {
+	//	InputPath = argv[2];
+	//}
+	//if (args > 2) {
+	//	InputPath = argv[3];
+	//}
+
+	PrintLog("Starting overlap...\n");
 
 	std::vector<Mat> images = ImageStacker::getImages(InputPath);
 
-	std::vector<Point> AlignmentInfo = ImageStacker::getAlignmentInfo(images, 0);
+	if (images.size() > 0) {
+		std::vector<Point> AlignmentInfo = ImageStacker::getAlignmentInfo(images);
 
-	Mat ResultImage = ImageStacker::calculateAveragePixels(images, AlignmentInfo);
+		Mat ResultImage = ImageStacker::calculateAveragePixels(images, AlignmentInfo);
 
-	imwrite(OutputPath, ResultImage);
+		imwrite(OutputPath, ResultImage);
 
-	ResultImage = reduceLight(ResultImage, Scalar(200, 200, 200));
-	imwrite("F:/source/VS Projects/VS19/C++/overlap/x64/Release/Output/Output2.png", ResultImage);
+		ResultImage = reduceLight(ResultImage, Scalar(200, 200, 200));
+		imwrite("F:/source/VS Projects/VS19/C++/ImageStacker/Output2.png", ResultImage);
+
+		PrintLog("Picture saved at '" + OutputPath + "'.\nPress 'enter' to end the programm...");
+	}
 	
-	PrintLog("Das Bild wurde als " + OutputPath + " gespeichert.\nDrueck 'enter' um das programm zu beenden...");
-	
+	//TODO: Save "Log"
+
 	std::cin.get();
 	return 0;
 }

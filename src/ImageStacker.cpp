@@ -1,100 +1,113 @@
 #include "ImageStacker.h"
 
+std::string Log = "";
+void PrintLog(std::string message) {
+	Log += message;
+	std::cout << message;
+}
+
 std::vector<Mat> ImageStacker::getImages(String path_to_source)
 {
 	bool isVideo = false;
 	std::vector<Mat> Return;
+	Return.resize(0);
 
 	std::vector<String> Filenames;
+	Filenames.resize(0);
 	int Supported = 0;
 	int notSupported = 0;
 
 	glob(path_to_source, Filenames);
 
-	for (int i = 0; i < Filenames.size(); i++) {
-		String Fileformat = "";
-		for (int j = Filenames.at(i).find_last_of('.'); j < Filenames.at(i).size(); j++) {
-			Fileformat += Filenames.at(i)[j];
-		}
-
-		if (Fileformat == ".mp4") {
-			PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + path_to_source + "\n");
-			isVideo = true;
-			break;
-		}
-		else if (Fileformat == ".avi") {
-			PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + path_to_source + "\n");
-			isVideo = true;
-			break;
-		}
-		else if (Fileformat == ".png") {
-			Supported++;
-			PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
-		}
-		else if (Fileformat == ".jpg" || Fileformat == ".jpeg" || Fileformat == ".jpe") {
-			Supported++;
-			PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
-		}
-		else if (Fileformat == ".bmp" || Fileformat == ".dip") {
-			Supported++;
-			PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
-		}
-		else {
-			notSupported++;
-			PrintLog("Fehler - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
-
-			Filenames.erase(Filenames.begin() + i);
-			i--;
-		}
-	}
-
-	PrintLog("\n");
-
-	if (!isVideo) {
-		PrintLog(std::to_string(Supported) + " / " + std::to_string(Supported + notSupported) + " Dateien unterstuetzt.\n");
-		PrintLog(std::to_string(notSupported) + " / " + std::to_string(Supported + notSupported) + " Dateien nicht unterstuetzt.\n\n");
-
+	if (Filenames.size() > 0) {
 		for (int i = 0; i < Filenames.size(); i++) {
-			Mat tmp = imread(Filenames.at(i));
+			String Fileformat = "";
+			for (int j = Filenames.at(i).find_last_of('.'); j < Filenames.at(i).size(); j++) {
+				Fileformat += Filenames.at(i)[j];
+			}
 
-			if (!tmp.data) {
-				PrintLog("Error: Bild konnte nicht geladen werden!\nVielleicht ist das Dateiformat nicht von dieser OpenCV-Version unterstuetzt. *.bmp oder *.dip Files gehen immer!\nFile: " + Filenames.at(i) + "\n\n");
+			if (Fileformat == ".mp4") {
+				PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + path_to_source + "\n");
+				isVideo = true;
+				break;
+			}
+			else if (Fileformat == ".avi") {
+				PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + path_to_source + "\n");
+				isVideo = true;
+				break;
+			}
+			else if (Fileformat == ".png") {
+				Supported++;
+				PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
+			}
+			else if (Fileformat == ".jpg" || Fileformat == ".jpeg" || Fileformat == ".jpe") {
+				Supported++;
+				PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
+			}
+			else if (Fileformat == ".bmp" || Fileformat == ".dip") {
+				Supported++;
+				PrintLog("  OK   - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
 			}
 			else {
-				Return.push_back(tmp);
+				notSupported++;
+				PrintLog("Error - Format: *" + Fileformat + "\t\t" + Filenames.at(i) + "\n");
+
+				Filenames.erase(Filenames.begin() + i);
+				i--;
+			}
+		}
+
+		PrintLog("\n");
+
+		if (!isVideo) {
+			PrintLog(std::to_string(Supported) + " / " + std::to_string(Supported + notSupported) + " Files supported.\n");
+			PrintLog(std::to_string(notSupported) + " / " + std::to_string(Supported + notSupported) + " Files not supported.\n\n");
+
+			for (int i = 0; i < Filenames.size(); i++) {
+				Mat tmp = imread(Filenames.at(i));
+
+				if (!tmp.data) {
+					PrintLog("Error: Cannot load image!\nMaybe is this Fileformat not supported by this OpenCV-Version. *.bmp or *.dip Files work always!\nFile: " + Filenames.at(i) + "\n\n");
+				}
+				else {
+					Return.push_back(tmp);
+				}
+			}
+		}
+		else {
+			VideoCapture cap;
+			cap.open(path_to_source);
+
+			if (!cap.isOpened()) {
+				PrintLog("Error: Cannot load video!\nMaybe is this Fileformat not supported by this OpenCV-Version.\nFile: " + path_to_source + "\n\n");
+				return Return;
+			}
+
+			PrintLog("Stating converting from video to Images...");
+			while (true) {
+				Mat frame;
+				bool bSuccess = cap.read(frame);
+
+				if (bSuccess == false)
+				{
+					PrintLog("   Done!\n");
+					break;
+				}
+
+				Return.push_back(frame);
 			}
 		}
 	}
 	else {
-		VideoCapture cap;
-		cap.open(path_to_source);
-
-		if (!cap.isOpened()) {
-			PrintLog("Error: Video konnte nicht geladen werden!\nVielleicht ist das Dateiformat nicht von dieser OpenCV-Version unterstuetzt.\nFile: " + path_to_source + "\n\n");
-			return Return;
-		}
-
-		PrintLog("Starte convertierung von Video zu Bildern...");
-		while (true) {
-			Mat frame;
-			bool bSuccess = cap.read(frame);
-
-			if (bSuccess == false)
-			{
-				PrintLog("   Fertig!\n");
-				break;
-			}
-
-			Return.push_back(frame);
-		}
+		PrintLog("Error: The directory '" + path_to_source + "' does not exist or there are no files.");
 	}
-	
+
 	return Return;
 }
 
 std::vector<Point> ImageStacker::getAlignmentInfo(std::vector<Mat> OriginalinputImages, int mainImage, int Number_of_mainObjects)
 {
-	PrintLog("Stabilisiere Bilder...\n");
+	PrintLog("Stabilising images...\n");
 
 	std::vector<Mat> inputImages;
 	inputImages.resize(OriginalinputImages.size());
@@ -103,7 +116,7 @@ std::vector<Point> ImageStacker::getAlignmentInfo(std::vector<Mat> Originalinput
 	}
 
 	//make sure that "mainImage" is not causing a outofrange-exeption
-	if (mainImage > inputImages.size())
+	if (mainImage >= inputImages.size())
 		mainImage = inputImages.size() - 1;
 
 	std::vector<Point> AlignmentInfo;
@@ -218,10 +231,10 @@ std::vector<Point> ImageStacker::getAlignmentInfo(std::vector<Mat> Originalinput
 				AlignmentInfo.at(i) = Offset;
 			}
 		}
-		PrintLog("Bild " + std::to_string(i + 1) + " / " + std::to_string(inputImages.size()) + "\n");
+		PrintLog("Image " + std::to_string(i + 1) + " / " + std::to_string(inputImages.size()) + "\n");
 	}
 	
-	PrintLog("----Fertig!----\n");
+	PrintLog("----Done!----\n");
 	return AlignmentInfo;
 }
 
@@ -239,7 +252,7 @@ std::vector<Mat> ImageStacker::ReziseMatsWithAlignmentInfo(std::vector<Mat> Inpu
 
 Mat ImageStacker::calculateAveragePixels(std::vector<Mat> InputImages, std::vector<Point> AlignmentInfo)
 {
-	PrintLog("Bereite berechnung vor...");
+	PrintLog("Preparing calculation...");
 
 	int minCols = 10000;
 	int minRows = 10000;
@@ -254,9 +267,10 @@ Mat ImageStacker::calculateAveragePixels(std::vector<Mat> InputImages, std::vect
 	}
 	
 	Mat OutputImage = InputImages.at(0);
-	PrintLog("   Fertig!\nStarte berechnung. Das dauert eine Weile...");
+	PrintLog("   Done!\nStarting calculation. This will take a while...\n");
 
 	for (int Column = 0; Column < minCols; Column++) {
+		PrintLog(std::to_string((Column + 1) * 100 / minCols) + "%\n");
 		for (int Row = 0; Row < minRows; Row++) {
 			//TODO: try to implement Mat::ptr() insteat if Mat::at()
 			Vec3i Color = OutputImage.at<Vec3b>(Point(Column, Row));
@@ -273,7 +287,7 @@ Mat ImageStacker::calculateAveragePixels(std::vector<Mat> InputImages, std::vect
 		}
 	}
 
-	PrintLog("   Fertig!\n");
+	PrintLog("----Done!----\n");
 
 	return OutputImage;
 }
