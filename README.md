@@ -1,7 +1,7 @@
 # ImageStacker
 This is a simple libary/class that stacks images.
 
-----under development----
+----development discontinued----
 
 # Setup
 Just copy the sourcefiles in your project or add the CMakeLists.txt and you are ready to go.
